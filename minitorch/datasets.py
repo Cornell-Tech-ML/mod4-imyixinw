@@ -5,6 +5,17 @@ from typing import List, Tuple
 
 
 def make_pts(N: int) -> List[Tuple[float, float]]:
+    """Create a list of N random points.
+
+    Args:
+    ----
+        N: The number of points
+
+    Returns:
+    -------
+        A list of N points represented by a tuple of floats
+
+    """
     X = []
     for i in range(N):
         x_1 = random.random()
@@ -21,6 +32,7 @@ class Graph:
 
 
 def simple(N: int) -> Graph:
+    """Create a simple dataset where the left half is 1 and the right half is 0"""
     X = make_pts(N)
     y = []
     for x_1, x_2 in X:
@@ -30,6 +42,7 @@ def simple(N: int) -> Graph:
 
 
 def diag(N: int) -> Graph:
+    """Create a diagonal dataset where the bottom left is 1 and the top right is 0"""
     X = make_pts(N)
     y = []
     for x_1, x_2 in X:
@@ -39,6 +52,7 @@ def diag(N: int) -> Graph:
 
 
 def split(N: int) -> Graph:
+    """Create a split dataset where the middle is 0 and the sides are 1"""
     X = make_pts(N)
     y = []
     for x_1, x_2 in X:
@@ -48,6 +62,7 @@ def split(N: int) -> Graph:
 
 
 def xor(N: int) -> Graph:
+    """Create a xor dataset where upper left and lower right are 1 and the rest are 0"""
     X = make_pts(N)
     y = []
     for x_1, x_2 in X:
@@ -57,6 +72,7 @@ def xor(N: int) -> Graph:
 
 
 def circle(N: int) -> Graph:
+    """Create a circle dataset where points in the center circle are 0 and the rest are 1"""
     X = make_pts(N)
     y = []
     for x_1, x_2 in X:
@@ -67,6 +83,8 @@ def circle(N: int) -> Graph:
 
 
 def spiral(N: int) -> Graph:
+    """Create a spiral dataset where the points of 0s and 1s are in a spiral shape"""
+
     def x(t: float) -> float:
         return t * math.cos(t) / 20.0
 

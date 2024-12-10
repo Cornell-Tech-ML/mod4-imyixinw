@@ -25,43 +25,62 @@ class Module:
         self.training = True
 
     def modules(self) -> Sequence[Module]:
-        """Return the direct child modules of this module."""
+        """Return the direct child modules of this module"""
         m: Dict[str, Module] = self.__dict__["_modules"]
         return list(m.values())
 
     def train(self) -> None:
-        """Set the mode of this module and all descendent modules to `train`."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        """Set the mode of this module and all descendent modules to `train`"""
+        for module in self.modules():
+            module.train()
+        self.training = True
 
     def eval(self) -> None:
-        """Set the mode of this module and all descendent modules to `eval`."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        """Set the mode of this module and all descendent modules to `eval`"""
+        for module in self.modules():
+            module.eval()
+        self.training = False
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
-        """Collect all the parameters of this module and its descendents.
+        """Collect all the parameters of this module and its descendents
 
         Returns
         -------
-            The name and `Parameter` of each ancestor parameter.
+            The name and `Parameter` of each ancestor parameter
 
         """
-        raise NotImplementedError("Need to include this file from past assignment.")
+        parameters = {}
+        for k, v in self._parameters.items():
+            parameters[k] = v
+
+        for mod_name, m in self._modules.items():
+            for k, v in m.named_parameters():
+                parameters[f"{mod_name}.{k}"] = v
+        return list(parameters.items())
+        # res = [(k, v) for k, v in self._parameters.items()]
+        # for name, sub in self._modules.items():
+        #     res.extend([(name + "." + n, p) for n, p in sub.named_parameters()])
+        # return res
 
     def parameters(self) -> Sequence[Parameter]:
-        """Enumerate over all the parameters of this module and its descendents."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        """Enumerate over all the parameters of this module and its descendents"""
+        return [j for _, j in self.named_parameters()]
+        # res = list(self._parameters.values())
+        # for sub in self._modules.values():
+        #     res.extend(sub.parameters())
+        # return res
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
-        """Manually add a parameter. Useful helper for scalar parameters.
+        """Manually add a parameter. Useful helper for scalar parameters
 
         Args:
         ----
-            k: Local name of the parameter.
-            v: Value for the parameter.
+            k: Local name of the parameter
+            v: Value for the parameter
 
         Returns:
         -------
-            Newly created parameter.
+            Newly created parameter
 
         """
         val = Parameter(v, k)
@@ -85,6 +104,7 @@ class Module:
         return None
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """Call the forward method of the module"""
         return self.forward(*args, **kwargs)
 
     def __repr__(self) -> str:
