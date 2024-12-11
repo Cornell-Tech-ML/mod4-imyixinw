@@ -31,7 +31,6 @@ def test_avg(t: Tensor) -> None:
 @pytest.mark.task4_4
 @given(tensors(shape=(2, 3, 4)))
 def test_max(t: Tensor) -> None:
-    # TODO: Implement for Task 4.4.
     # Check forward pass for all dimensions
     out = minitorch.max(t, dim=0)
     assert_close(out[0, 0, 0], max([t[i, 0, 0] for i in range(2)]))
@@ -39,9 +38,6 @@ def test_max(t: Tensor) -> None:
     assert_close(out[0, 0, 0], max([t[0, i, 0] for i in range(3)]))
     out = minitorch.max(t, dim=2)
     assert_close(out[0, 0, 0], max([t[0, 0, i] for i in range(4)]))
-
-    # Test backward pass
-    # raise NotImplementedError("Need to implement for Task 4.4")
 
 
 @pytest.mark.task4_4

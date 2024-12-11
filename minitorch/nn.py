@@ -35,7 +35,6 @@ def tile(input: Tensor, kernel: Tuple[int, int]) -> Tuple[Tensor, int, int]:
     kh, kw = kernel
     assert height % kh == 0
     assert width % kw == 0
-    # TODO: Implement for Task 4.3.
 
     new_height = height // kh
     new_width = width // kw
@@ -49,8 +48,6 @@ def tile(input: Tensor, kernel: Tuple[int, int]) -> Tuple[Tensor, int, int]:
 
     return tiled, new_height, new_width
 
-
-# TODO: Implement for Task 4.3.
 
 
 def avgpool2d(input: Tensor, kernel: Tuple[int, int]) -> Tensor:
@@ -95,8 +92,12 @@ def softmax(input: Tensor, dim: int) -> Tensor:
 
 def logsoftmax(input: Tensor, dim: int) -> Tensor:
     """Compute the log of the softmax as a tensor"""
-    exp = input.exp()
-    return input - exp.sum(dim).log()
+    # exp = input.exp()
+    # return input - exp.sum(dim).log()
+    max_values = max(input, dim)
+    subtracted_input = input - max_values
+    log_sum_exp = (subtracted_input.exp().sum(dim)).log()
+    return subtracted_input - log_sum_exp
 
 
 def maxpool2d(input: Tensor, kernel: Tuple[int, int]) -> Tensor:
