@@ -42,7 +42,9 @@ class Conv2d(minitorch.Module):
 
     def forward(self, input):
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        output = minitorch.conv2d(input, self.weights.value) + self.bias.value
+        return output
+        # raise NotImplementedError("Need to implement for Task 4.5")
 
 
 class Network(minitorch.Module):
@@ -68,11 +70,27 @@ class Network(minitorch.Module):
         self.out = None
 
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        self.num_classes = C
+
+        # in_channels, out_channels, kh, kw
+        self.conv1 = Conv2d(1, 4, 3, 3)
+        self.conv2 = Conv2d(4, 8, 3, 3)
+        self.linear1 = Linear(392, 64)
+        self.linear2 = Linear(64, self.num_classes)
+        # raise NotImplementedError("Need to implement for Task 4.5")
 
     def forward(self, x):
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        self.mid = self.conv1(x).relu()
+        self.out = self.conv2(self.mid).relu()
+        out = minitorch.avgpool2d(self.out, (4, 4))
+        out = out.view(BATCH, 392)
+        out = self.linear1.forward(out).relu()
+        out = minitorch.dropout(out, 0.25)
+        out = self.linear2.forward(out)
+        return minitorch.logsoftmax(out, 1)
+
+        # raise NotImplementedError("Need to implement for Task 4.5")
 
 
 def make_mnist(start, stop):
@@ -99,7 +117,7 @@ class ImageTrain:
         return self.model.forward(minitorch.tensor([x], backend=BACKEND))
 
     def train(
-        self, data_train, data_val, learning_rate, max_epochs=500, log_fn=default_log_fn
+        self, data_train, data_val, learning_rate, max_epochs=25, log_fn=default_log_fn
     ):
         (X_train, y_train) = data_train
         (X_val, y_val) = data_val
@@ -164,6 +182,9 @@ class ImageTrain:
                             if y[i, ind] == 1.0:
                                 correct += 1
                     log_fn(epoch, total_loss, correct, BATCH, losses, model)
+                    # save log_fn to a text file
+                    with open("mnist.txt", "a") as f:
+                        f.write(f"Epoch {epoch} loss {total_loss} valid acc {correct}/{BATCH}\n")
 
                     total_loss = 0.0
                     model.train()

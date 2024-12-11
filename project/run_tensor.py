@@ -3,6 +3,8 @@ Be sure you have minitorch installed in you Virtual Env.
 >>> pip install -Ue .
 """
 
+from audioop import bias
+from numpy import stack
 import minitorch
 
 # Use this function to make a random parameter in
@@ -10,6 +12,35 @@ import minitorch
 def RParam(*shape):
     r = 2 * (minitorch.rand(shape) - 0.5)
     return minitorch.Parameter(r)
+
+
+class Network(minitorch.Module):
+    def __init__(self, hidden_layers):
+        super().__init__()
+        self.layer1 = Linear(2, hidden_layers)
+        self.layer2 = Linear(hidden_layers, hidden_layers)
+        self.layer3 = Linear(hidden_layers, 1)
+
+    def forward(self, x):
+        middle = self.layer1.forward(x).relu()
+        end = self.layer2.forward(middle).relu()
+        return self.layer3.forward(end).sigmoid()
+
+
+class Linear(minitorch.Module):
+    def __init__(self, in_size, out_size):
+        super().__init__()
+        self.in_size = in_size
+        self.out_size = out_size
+        self.weights = RParam(in_size, out_size)
+        self.bias = RParam(out_size)
+
+    def forward(self, inputs):
+        batch, in_size = inputs.shape
+        return (
+            self.weights.value.view(1, in_size, self.out_size)
+            * inputs.view(batch, in_size, 1)
+        ).sum(1).view(batch, self.out_size) + self.bias.value.view(self.out_size)
 
 
 def default_log_fn(epoch, total_loss, correct, losses):
@@ -33,8 +64,8 @@ class TensorTrain:
         self.model = Network(self.hidden_layers)
         optim = minitorch.SGD(self.model.parameters(), learning_rate)
 
-        X = minitorch.tensor(data.X)
-        y = minitorch.tensor(data.y)
+        X = minitorch.tensor(data.X, requires_grad=True)
+        y = minitorch.tensor(data.y, requires_grad=True)
 
         losses = []
         for epoch in range(1, self.max_epochs + 1):

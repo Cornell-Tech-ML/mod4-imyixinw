@@ -224,10 +224,12 @@ if numba.cuda.is_available():
         z = minitorch.tensor(x1, backend=shared["fast"]) @ minitorch.tensor(
             y1, backend=shared["fast"]
         )
+        print("z", z)
 
         x = minitorch.tensor(x1, backend=shared["cuda"])
         y = minitorch.tensor(y1, backend=shared["cuda"])
         z2 = x @ y
+        print("z2", z2)
 
         for i in range(2):
             for j in range(2):
@@ -315,6 +317,7 @@ def test_two_grad_broadcast(
     data: DataObject,
 ) -> None:
     """Run backward for all two arg functions above with broadcast."""
+    print("Running broadcast test")
     t1, t2 = data.draw(shaped_tensors(2, backend=shared[backend]))
     name, base_fn, tensor_fn = fn
 

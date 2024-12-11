@@ -63,6 +63,9 @@ class Scalar:
     name: str = field(default="")
     unique_id: int = field(default=0)
 
+    def __hash__(self) -> int:
+        return hash(self.unique_id)
+
     def __post_init__(self):
         global _var_count
         _var_count += 1
@@ -112,21 +115,45 @@ class Scalar:
         return self.history is not None and self.history.last_fn is None
 
     def is_constant(self) -> bool:
+        """True if this variable is a constant"""
         return self.history is None
 
     @property
     def parents(self) -> Iterable[Variable]:
-        """Get the variables used to create this one."""
+        """Return the parents of this variable"""
         assert self.history is not None
         return self.history.inputs
 
     def chain_rule(self, d_output: Any) -> Iterable[Tuple[Variable, Any]]:
+        """Compute the chain rule and filter out constants
+
+        Args:
+        ----
+            d_output: The derivative of the output with respect to this variable
+
+        Returns:
+        -------
+            An iterable of tuples of variables and derivatives
+
+        """
         h = self.history
         assert h is not None
         assert h.last_fn is not None
         assert h.ctx is not None
 
-        raise NotImplementedError("Need to include this file from past assignment.")
+        x = h.last_fn._backward(h.ctx, d_output)
+        return list(zip(h.inputs, x))
+
+        # local_derivatives = h.last_fn._backward(h.ctx, d_output)
+        # if isinstance(local_derivatives, float) or isinstance(local_derivatives, int):
+        #     local_derivatives = (local_derivatives,)
+
+        # var_derivative_pairs = []
+
+        # for in_var, local_der in zip(h.inputs, local_derivatives):
+        #     if not in_var.is_constant():
+        #         var_derivative_pairs.append((in_var, local_der))
+        # return var_derivative_pairs
 
     def backward(self, d_output: Optional[float] = None) -> None:
         """Calls autodiff to fill in the derivatives for the history of this object.
@@ -141,15 +168,53 @@ class Scalar:
             d_output = 1.0
         backpropagate(self, d_output)
 
-    raise NotImplementedError("Need to include this file from past assignment.")
+    def __lt__(self, b: ScalarLike) -> Scalar:
+        """Return Scalar representing less than comparison"""
+        return LT.apply(self, b)
+
+    def __gt__(self, b: ScalarLike) -> Scalar:
+        """Return Scalar representing greater than comparison"""
+        return LT.apply(b, self)
+
+    def __sub__(self, b: ScalarLike) -> Scalar:
+        """Return Scalar representing subtraction"""
+        return Add.apply(self, -b)
+
+    def __neg__(self) -> Scalar:
+        """Return Scalar representing negation"""
+        return Neg.apply(self)
+
+    def __add__(self, b: ScalarLike) -> Scalar:
+        """Return Scalar representing addition"""
+        return Add.apply(self, b)
+
+    def log(self) -> Scalar:
+        """Return Scalar representing natural logarithm"""
+        return Log.apply(self)
+
+    def exp(self) -> Scalar:
+        """Return Scalar representing exponential function"""
+        return Exp.apply(self)
+
+    def sigmoid(self) -> Scalar:
+        """Return Scalar representing sigmoid function"""
+        return Sigmoid.apply(self)
+
+    def relu(self) -> Scalar:
+        """Return Scalar representing ReLU function"""
+        return ReLU.apply(self)
+
+    def __eq__(self, b: ScalarLike) -> Scalar:
+        """Return Scalar representing equality comparison"""
+        return EQ.apply(self, b)
 
 
 def derivative_check(f: Any, *scalars: Scalar) -> None:
     """Checks that autodiff works on a python function.
     Asserts False if derivative is incorrect.
 
-    Parameters
-    ----------
+    Args:
+    ----
         f : function from n-scalars to 1-scalar.
         *scalars  : n input scalar values.
 
