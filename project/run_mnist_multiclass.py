@@ -89,7 +89,7 @@ class Network(minitorch.Module):
         out = minitorch.dropout(out, 0.25)
         out = self.linear2.forward(out)
         return minitorch.logsoftmax(out, 1)
-    
+
         # raise NotImplementedError("Need to implement for Task 4.5")
 
 

@@ -169,7 +169,6 @@ def tensor_map(
         in_shape: Shape,
         in_strides: Strides,
     ) -> None:
-
         if (
             len(out_strides) != len(in_strides)
             or (out_strides != in_strides).any()
@@ -224,7 +223,6 @@ def tensor_zip(
         b_shape: Shape,
         b_strides: Strides,
     ) -> None:
-
         if (
             len(out_strides) != len(a_strides)
             or len(out_strides) != len(b_strides)
@@ -281,7 +279,6 @@ def tensor_reduce(
         a_strides: Strides,
         reduce_dim: int,
     ) -> None:
-
         for i in prange(len(out)):
             out_index: Index = np.empty(MAX_DIMS, dtype=np.int32)
             reduce_size = a_shape[reduce_dim]
