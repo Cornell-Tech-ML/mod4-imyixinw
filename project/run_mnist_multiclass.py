@@ -182,7 +182,7 @@ class ImageTrain:
                             if y[i, ind] == 1.0:
                                 correct += 1
                     log_fn(epoch, total_loss, correct, BATCH, losses, model)
-                    # save log_fn to a text file for later analysis
+                    # save log_fn to a text file
                     with open("mnist.txt", "a") as f:
                         f.write(f"Epoch {epoch} loss {total_loss} valid acc {correct}/{BATCH}\n")
 

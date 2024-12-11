@@ -34,8 +34,6 @@ class Conv1d(minitorch.Module):
         self.bias = RParam(1, out_channels, 1)
 
     def forward(self, input):
-        # TODO: Implement for Task 4.5.
-        # raise NotImplementedError("Need to implement for Task 4.5")
         output = minitorch.conv1d(input, self.weights.value) + self.bias.value
         return output
 
@@ -50,7 +48,7 @@ class CNNSentimentKim(minitorch.Module):
         feature_map_size=100 output channels and [3, 4, 5]-sized kernels
         followed by a non-linear activation function (the paper uses tanh, we apply a ReLu)
     2. Apply max-over-time across each feature map
-    3. Apply a Linear to size C (number of classes) followed by a ReLU and Dropout with rate 25%
+    3. Apply a Linear to size C (number of classes) followed and Dropout with rate 25%
     4. Apply a sigmoid over the class dimension.
     """
 
@@ -63,10 +61,14 @@ class CNNSentimentKim(minitorch.Module):
     ):
         super().__init__()
         self.feature_map_size = feature_map_size
-        # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
         self.dropout = dropout
         self.num_classes = 1
+
+        self.conv1 = Conv1d(embedding_size, feature_map_size, filter_sizes[0])
+        self.conv2 = Conv1d(embedding_size, feature_map_size, filter_sizes[1])
+        self.conv3 = Conv1d(embedding_size, feature_map_size, filter_sizes[2])
+
+        self.linear = Linear(self.feature_map_size, self.num_classes)
 
 
 
@@ -75,7 +77,22 @@ class CNNSentimentKim(minitorch.Module):
         embeddings tensor: [batch x sentence length x embedding dim]
         """
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        embeddings = embeddings.permute(0, 2, 1)
+
+        conv1 = self.conv1(embeddings).relu()
+        conv2 = self.conv2(embeddings).relu()
+        conv3 = self.conv3(embeddings).relu()
+
+        conv1 = minitorch.max(conv1, 2)
+        conv2 = minitorch.max(conv2, 2)
+        conv3 = minitorch.max(conv3, 2)
+        out = conv1 + conv2 + conv3
+
+        out = out.view(embeddings.shape[0], self.feature_map_size)
+        out = self.linear.forward(out)
+        out = minitorch.dropout(out, self.dropout, not self.training)
+        return out.sigmoid().view(embeddings.shape[0])
+        # raise NotImplementedError("Need to implement for Task 4.5")
 
 
 # Evaluation helper methods
@@ -119,6 +136,13 @@ def default_log_fn(
     if len(validation_predictions) > 0:
         print(f"Validation accuracy: {validation_accuracy[-1]:.2%}")
         print(f"Best Valid accuracy: {best_val:.2%}")
+    
+    
+    with open('sentiment.txt', 'a') as f:
+        f.write(f"Epoch {epoch}, loss {train_loss}, train accuracy: {train_accuracy[-1]:.2%}\n")
+        if len(validation_predictions) > 0:
+            f.write(f"Validation accuracy: {validation_accuracy[-1]:.2%}\n")
+            f.write(f"Best Valid accuracy: {best_val:.2%}\n")
 
 
 class SentenceSentimentTrain:
@@ -259,14 +283,76 @@ def encode_sentiment_data(dataset, pretrained_embeddings, N_train, N_val=0):
 
 
 if __name__ == "__main__":
+    def load_glove_embeddings(path="project/data/glove.6B/glove.6B.50d.txt"):
+        """Load GloVe embeddings from local file.
+        
+        Args:
+        ----
+            path: Path to the GloVe embeddings file
+            
+        Returns:
+        -------
+            dict: Word to embedding mapping
+        """
+        word2emb = {}
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                values = line.split()
+                word = values[0]
+                vector = [float(x) for x in values[1:]]
+                word2emb[word] = vector
+        return word2emb
+
+    # Replace the embeddings initialization line with:
+    word2emb = load_glove_embeddings()
+
+    class GloveEmbedding:
+        """Simple wrapper class to mimic the original GloveEmbedding interface."""
+        
+        def __init__(self, word2emb):
+            self.word2emb = word2emb
+            # Get embedding dimension from first entry
+            self.d_emb = len(next(iter(word2emb.values())))
+            
+        def emb(self, word, default=None):
+            """Get embedding for a word.
+            
+            Args:
+            ----
+                word: Word to get embedding for
+                default: Default value if word not found
+                
+            Returns:
+            -------
+                list: Embedding vector
+            """
+            return self.word2emb.get(word, default)
+        
+        def __contains__(self, word):
+            """Support for 'in' operator.
+            
+            Args:
+            ----
+                word: Word to check
+                
+            Returns:
+            -------
+                bool: True if word is in embeddings
+            """
+            return word in self.word2emb
+
+    # Then use it like:
+    embeddings = GloveEmbedding(word2emb)
+
     train_size = 450
     validation_size = 100
     learning_rate = 0.01
-    max_epochs = 250
+    max_epochs = 50
 
     (X_train, y_train), (X_val, y_val) = encode_sentiment_data(
         load_dataset("glue", "sst2"),
-        embeddings.GloveEmbedding("wikipedia_gigaword", d_emb=50, show_progress=True),
+        embeddings,
+        # embeddings.GloveEmbedding("wikipedia_gigaword", d_emb=50, show_progress=True),
         train_size,
         validation_size,
     )
